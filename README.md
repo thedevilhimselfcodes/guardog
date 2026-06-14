@@ -54,7 +54,9 @@ Guardog requires a C compiler to build the native extension.
 ## Build and install the C-extension:
 
 Bash
-```python setup.py build_ext --inplace
+```
+python setup.py build_ext --inplace
+
 ```
 Ensure guardog.matrix and guardog_meta.json are in your working directory.
 
