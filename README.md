@@ -76,6 +76,8 @@ async def secure_payload_firewall(request: Request, call_next):
             
     return await call_next(request)
 	
+```
+	
 ## Part 4: Deployment & Verification Lifecycle
 
 The asset includes a master orchestrator script that fully automates the cleaning, compiling, verification, and performance evaluation workflows in a single command.
@@ -94,12 +96,13 @@ To add or modify security tokens:
 Open matrix_compiler.py.
 
 Locate the DEFAULT_RULES dictionary and add your structural strings:
-
+```
 Python
 DEFAULT_RULES = {
     "AWS_KEY": ["AKIAIOSFODNN7EXAMPLE"],
     "INTERNAL_API": ["cyburn_prod_77x9a"] # Custom rules here
 }
+```
 Run python matrix_compiler.py to regenerate the matrix signatures.
 
 ## Part 5: Acquisition & IP Transfer
