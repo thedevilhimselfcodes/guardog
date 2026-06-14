@@ -1,6 +1,10 @@
 # CyBurn Digital: Guardog Enterprise Firewall
 **Technical Evaluation & Asset Manifest**
 
+
+https://github.com/user-attachments/assets/9fcb324e-ff8a-48a8-93b2-83374d105b4b
+
+
 <img width="731" height="716" alt="guardog test" src="https://github.com/user-attachments/assets/49cd03bd-44f9-4553-bf9b-532551bc1de0" />
 
 
