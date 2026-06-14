@@ -29,9 +29,9 @@ Standard Python string manipulation forces the server to create complete copies 
 Python’s GIL prevents true multi-core processing. 
 **The Guardog Advantage:** Guardog drops into raw C, releases the GIL, and deploys OpenMP multi-threading. It slices the payload across available CPU cores. C-threads map secrets into private memory structs (Map phase) without ever halting to acquire a lock. The GIL is only reacquired once at the very end to dump the structs into a Python list (Reduce phase).
 
-### 3. O(1) Linear Time Execution
-Standard regex uses Non-Deterministic Finite Automata (NFA), which suffers from "catastrophic backtracking."
-**The Guardog Advantage:** Guardog pre-compiles all rules into an Aho-Corasick-style DFA matrix. The engine processes exactly one byte per clock cycle, regardless of how many rules are loaded. Whether scanning for 3 secrets or 3,000 secrets, the execution latency remains completely flat.
+### 3. O(n) Linear Time Execution with O(1) Rule Scaling
+Standard regex uses Non-Deterministic Finite Automata (NFA), which suffers from "catastrophic backtracking." 
+**The Guardog Advantage:** Guardog pre-compiles all rules into an Aho-Corasick-style DFA matrix. The total execution time is strictly linear `O(n)` relative to the payload size. However, the engine performs exactly one `O(1)` array lookup per byte, regardless of how many security rules are loaded. Whether you are scanning for 3 secrets or 3,000 secrets, the execution latency per byte remains completely flat.
 
 ---
 
