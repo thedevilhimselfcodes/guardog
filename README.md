@@ -75,3 +75,48 @@ async def secure_payload_firewall(request: Request, call_next):
             print(f"[SECURITY ALERT] Intercepted secrets: {sanitized['matches']}")
             
     return await call_next(request)
+	
+## Part 4: Deployment & Verification Lifecycle
+
+The asset includes a master orchestrator script that fully automates the cleaning, compiling, verification, and performance evaluation workflows in a single command.
+
+Ensure the host environment has Python 3.8+ (64-bit) and a C-compiler (MSVC with OpenMP for Windows, or GCC/Clang with libgomp for Linux/macOS).
+
+To perform a clean end-to-end installation validation, execute:
+
+Bash
+python run_pipeline_test.py
+This command will auto-compile the rule matrix, build the C-extension, run the structural boundaries test suite, and output the final MB/s benchmark to standard output.
+
+Modifying the Security Rules
+To add or modify security tokens:
+
+Open matrix_compiler.py.
+
+Locate the DEFAULT_RULES dictionary and add your structural strings:
+
+Python
+DEFAULT_RULES = {
+    "AWS_KEY": ["AKIAIOSFODNN7EXAMPLE"],
+    "INTERNAL_API": ["cyburn_prod_77x9a"] # Custom rules here
+}
+Run python matrix_compiler.py to regenerate the matrix signatures.
+
+## Part 5: Acquisition & IP Transfer
+This software asset is offered by CyBurn Digital under an Exclusive IP Buyout / Asset Transfer Agreement.
+
+Upon execution of the sale, the purchasing entity will receive:
+
+100% Intellectual Property Ownership: Full rights to the C-source code (engine.c), compilation architecture, test matrices, and integration blueprints.
+
+Unrestricted Usage: The buyer is authorized to integrate, modify, and distribute this compiled binary within their proprietary infrastructure or client deliverables.
+
+Royalty-Free: No ongoing licensing fees or volume-based throughput charges.
+
+Air-Gapped Security Guarantee: This engine contains zero external network calls, telemetry, or "phone-home" logic.
+
+To acquire this asset or request an engineering code audit, please contact:
+Vindana Sandun
+Director, CyBurn Digital
+mailtovindana@gmail.com
++94 76 388 5727 (WhatsApp)
