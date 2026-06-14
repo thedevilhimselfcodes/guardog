@@ -1,6 +1,9 @@
 # CyBurn Digital: Guardog Enterprise Firewall
 **Technical Evaluation & Asset Manifest**
 
+<img width="731" height="716" alt="guardog test" src="https://github.com/user-attachments/assets/49cd03bd-44f9-4553-bf9b-532551bc1de0" />
+
+
 > **NOTICE OF ASSET SALE** > The intellectual property, complete source code, and exclusive commercial rights to the Guardog Enterprise Engine are currently available for outright acquisition. This document serves as the technical evaluation manifest for prospective buyers. See **Part 5: Acquisition & IP Transfer** for terms.
 
 ## Executive Summary
