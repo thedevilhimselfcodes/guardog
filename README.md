@@ -1,132 +1,88 @@
-# CyBurn Digital: Guardog Enterprise Firewall
-**Technical Evaluation & Asset Manifest**
+# Guardog 🐕‍🦺
+**A Zero-Copy, High-Throughput PII Redaction Engine for Python**
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Python](https://img.shields.io/badge/Python-3.x-yellow.svg)](https://python.org)
+[![C-Extension](https://img.shields.io/badge/C--Core-Optimized-red.svg)]()
 
-https://github.com/user-attachments/assets/9fcb324e-ff8a-48a8-93b2-83374d105b4b
+Guardog is a highly optimized C-extension for Python designed to bypass the Global Interpreter Lock (GIL) and mutate gigabyte-scale memory buffers in place. 
 
+It was built by **CyBurn Digital** to solve a critical infrastructure bottleneck: Python's standard `re` (regex) module duplicating massive strings in RAM during data ingestion, leading to out-of-memory (OOM) server crashes.
 
-<img width="731" height="716" alt="guardog test" src="https://github.com/user-attachments/assets/49cd03bd-44f9-4553-bf9b-532551bc1de0" />
-
-
-> **NOTICE OF ASSET SALE** > The intellectual property, complete source code, and exclusive commercial rights to the Guardog Enterprise Engine are currently available for outright acquisition. This document serves as the technical evaluation manifest for prospective buyers. See **Part 5: Acquisition & IP Transfer** for terms.
-
-## Executive Summary
-Guardog is a hyperscale, multi-threaded Deterministic Finite Automaton (DFA) text sanitization engine. Built as a native C-extension for Python, it is designed to intercept, scan, and scrub high-volume payloads (server logs, LLM prompt streams, API ingestion) for sensitive data in real-time. 
-
-Clocking at **571+ MB/s**, Guardog operates at **14.4x the speed** of standard sequential Python `re` implementations by bypassing the Global Interpreter Lock (GIL) and utilizing a Zero-Copy memory architecture. It is designed to immediately reduce CPU compute overhead and API latency in high-throughput environments.
+By leveraging the Python `w*` buffer protocol and a compiled Deterministic Finite Automaton (DFA) matrix, Guardog achieves true zero-copy mutation with zero memory overhead.
 
 ---
 
-## Part 1: Architecture & Superiority (The Benchmarks)
+## 📊 The Benchmark: 1GB in 1.1 Seconds
 
-Standard regex pipelines fail at hyperscale due to three bottlenecks: CPU thread locking, memory duplication, and backtracking latency. Guardog eliminates all three.
+We tested Guardog against Python's highly optimized, native C-backed `re` module using a 1 Gigabyte raw text payload containing thousands of embedded secrets. 
 
-### 1. Zero-Copy Memory Mutation
-Standard Python string manipulation forces the server to create complete copies of the payload in RAM. If a server ingests a 50MB log, standard engines spike memory usage by an additional 50MB to process it. 
-**The Guardog Advantage:** Guardog utilizes Python's Read-Write Buffer Protocol (`w*`). It passes a direct pointer to the `bytearray` into the C-engine. The C-engine reads and mutates the data *in-place*. **RAM overhead during scanning is strictly 0 bytes**, preventing Out-Of-Memory (OOM) crashes in containerized environments.
 
-### 2. Lock-Free Map-Reduce (GIL Bypass)
-Python’s GIL prevents true multi-core processing. 
-**The Guardog Advantage:** Guardog drops into raw C, releases the GIL, and deploys OpenMP multi-threading. It slices the payload across available CPU cores. C-threads map secrets into private memory structs (Map phase) without ever halting to acquire a lock. The GIL is only reacquired once at the very end to dump the structs into a Python list (Reduce phase).
 
-### 3. O(n) Linear Time Execution with O(1) Rule Scaling
-Standard regex uses Non-Deterministic Finite Automata (NFA), which suffers from "catastrophic backtracking." 
-**The Guardog Advantage:** Guardog pre-compiles all rules into an Aho-Corasick-style DFA matrix. The total execution time is strictly linear `O(n)` relative to the payload size. However, the engine performs exactly one `O(1)` array lookup per byte, regardless of how many security rules are loaded. Whether you are scanning for 3 secrets or 3,000 secrets, the execution latency per byte remains completely flat.
 
----
 
-## Part 2: Engineering Capabilities & Limitations
+**The Results:**
+*   **Standard Regex:** 25.54 seconds | **947.6 MiB** Memory Overhead
+*   **Guardog Engine:** 1.13 seconds | **0.0 MiB** Memory Overhead (22x Faster)
 
-To maintain O(1) latency and Zero-Copy memory efficiency, specific computer science trade-offs were made. Engineering teams must evaluate the following structural profile:
-
-### What It CAN Do:
-* **Cross-Boundary Secret Detection:** OpenMP thread chunks feature a `MAX_LOOKAHEAD` overlap window. If a 20-character API key is perfectly sliced in half by two different CPU cores, the engine still successfully detects and redact it.
-* **Overlapping Secret Resolution (Two-Pass Mutation):** Guardog maps all coordinates in Pass 1, and mutates in Pass 2, guaranteeing 100% detection of adjacent or overlapping secrets (prevents the "Amnesia Overwrite" bug).
-* **Non-Destructive Pipeline Integrity:** Guardog operates on the raw byte layer. It does not force destructive Unicode normalization. Legitimate JSON structures, foreign languages, and mathematical symbols are passed through flawlessly.
-* **Cryptographic Tamper Resistance:** The compiled `.matrix` file is locked with a SHA-256 signature to prevent silent fail-open states if the matrix is corrupted.
-
-### What It CANNOT Do:
-* **No PCRE Backreferences:** Because it is a pure DFA, it has no memory of previously matched groups.
-* **No Unbounded Wildcards (`.*`):** To prevent L3 Cache misses, the compiler enforces a hard limit of `15,000` states. Guardog is designed for structural tokens (Keys, SSNs, Credit Cards, JWTs), not free-form linguistic parsing.
-* **No Runtime Hot-Swapping:** To update or add new rules, DevSecOps must compile a new matrix file, and the application must be restarted to load the new binary signature into RAM.
+![Memory Benchmark](
+<img width="1260" height="540" alt="benchmark_results" src="https://github.com/user-attachments/assets/d48b9b4e-961d-4c14-88ef-a165215cfd9e" />
+> *The massive mountain is Python's standard regex struggling and duplicating data. The tiny, perfectly flat line at the bottom right (26s mark) is Guardog chewing through the same 1GB file in 1 second without a single byte of memory overhead.*
 
 ---
 
-## Part 3: API Integration Blueprint
+## ⚡ Core Features
 
-Because Guardog releases the GIL, it is perfectly safe to run inside asynchronous web frameworks like FastAPI without blocking the main event loop.
+*   **True Zero-Copy Mutation:** Accepts mutable `bytearray` objects and overwrites PII directly in memory. No string allocation, no data duplication.
+*   **GIL Bypass:** Releases the Python Global Interpreter Lock entirely, allowing your main application to continue running asynchronously.
+*   **DFA Matrix Execution:** Scans using a pre-compiled, mathematically deterministic state machine (`guardog.matrix`) rather than backtracking regex, ensuring $O(N)$ guaranteed execution time regardless of payload complexity.
+*   **Multi-Threading (OpenMP):** Automatically detects payload size. For payloads over 5MB, it spins up parallel C-threads to chunk and sanitize the buffer simultaneously.
 
-```python
-from fastapi import FastAPI, Request
-import guardog
+---
 
-app = FastAPI(title="Secure Ingestion API")
+## 🛠️ Installation
 
-# Initialize the DFA matrix into memory once at startup
-detector = guardog.GuardogSession(
-    matrix_path="guardog.matrix", 
-    meta_path="guardog_meta.json"
-)
+Guardog requires a C compiler to build the native extension. 
 
-@app.middleware("http")
-async def secure_payload_firewall(request: Request, call_next):
-    body_bytes = await request.body()
-    
-    if body_bytes:
-        payload_text = body_bytes.decode('utf-8', errors='ignore')
-        
-        # Scrub payload at 570+ MB/s
-        sanitized = detector.sanitize(payload_text)
-        
-        if sanitized["matches"]:
-            print(f"[SECURITY ALERT] Intercepted secrets: {sanitized['matches']}")
-            
-    return await call_next(request)
-	
+1. Clone the repository:
+```bash
+   git clone [https://github.com/thedevilhimselfcodes/guardog.git](https://github.com/thedevilhimselfcodes/guardog.git)
+   cd guardog
+   
 ```
-	
-## Part 4: Deployment & Verification Lifecycle
-
-The asset includes a master orchestrator script that fully automates the cleaning, compiling, verification, and performance evaluation workflows in a single command.
-
-Ensure the host environment has Python 3.8+ (64-bit) and a C-compiler (MSVC with OpenMP for Windows, or GCC/Clang with libgomp for Linux/macOS).
-
-To perform a clean end-to-end installation validation, execute:
+   
+## Build and install the C-extension:
 
 Bash
-python run_pipeline_test.py
-This command will auto-compile the rule matrix, build the C-extension, run the structural boundaries test suite, and output the final MB/s benchmark to standard output.
-
-Modifying the Security Rules
-To add or modify security tokens:
-
-Open matrix_compiler.py.
-
-Locate the DEFAULT_RULES dictionary and add your structural strings:
+```python setup.py build_ext --inplace
 ```
+Ensure guardog.matrix and guardog_meta.json are in your working directory.
+
+## 🚀 Usage
+Guardog features a clean, Pythonic wrapper that automatically handles the zero-copy logic.
+
 Python
-DEFAULT_RULES = {
-    "AWS_KEY": ["AKIAIOSFODNN7EXAMPLE"],
-    "INTERNAL_API": ["cyburn_prod_77x9a"] # Custom rules here
-}
+```from guardog import GuardogSession
+
+# Initialize the engine (loads the DFA matrix)
+session = GuardogSession()
+
+# 1. Load your massive payload as raw bytes
+with open("massive_server_logs.log", "rb") as f:
+    raw_bytes = f.read()
+
+# 2. Create a mutable buffer
+mutable_buffer = bytearray(raw_bytes)
+
+# 3. Execute Zero-Copy Sanitize
+result = session.sanitize(mutable_buffer)
+
+print(f"Redaction complete. Total secrets found: {len(result['matches'])}")
 ```
-Run python matrix_compiler.py to regenerate the matrix signatures.
+## ⚖️ License & Commercial Use (Dual-License)
+Guardog is open-source and released under the GNU General Public License v3.0 (GPLv3). You are free to use, modify, and distribute this software, provided that any derivative works or backend systems incorporating it are also strictly open-sourced under the GPLv3.
 
-## Part 5: Acquisition & IP Transfer
-This software asset is offered by CyBurn Digital under an Exclusive IP Buyout / Asset Transfer Agreement.
+## 🏢 Enterprise Commercial License
+For enterprise compliance, most corporations cannot open-source their proprietary backend infrastructure. If you wish to embed Guardog into a closed-source commercial product, SaaS backend, or internal corporate data pipeline, you must acquire a Commercial License.
 
-Upon execution of the sale, the purchasing entity will receive:
-
-100% Intellectual Property Ownership: Full rights to the C-source code (engine.c), compilation architecture, test matrices, and integration blueprints.
-
-Unrestricted Usage: The buyer is authorized to integrate, modify, and distribute this compiled binary within their proprietary infrastructure or client deliverables.
-
-Royalty-Free: No ongoing licensing fees or volume-based throughput charges.
-
-Air-Gapped Security Guarantee: This engine contains zero external network calls, telemetry, or "phone-home" logic.
-
-To acquire this asset or request an engineering code audit, please contact:
-Vindana Sandun
-Director, CyBurn Digital
-mailtovindana@gmail.com
-+94 76 388 5727 (WhatsApp)
+For commercial licensing, custom DFA matrix training, and enterprise implementation consulting, contact the maintainers at mailtovindana@gmail.com.
